@@ -154,7 +154,7 @@ def env1_planning(eval_time=1):
 
     # visualization
     if eval_time == 1:
-        rrt = Rrt(x_start, x_goal, 0.5, 0.05, 10000, env.EnvOne())
+        rrt = Rrt(x_start, x_goal, 1, 0.05, 10000, env.EnvOne())
         path = rrt.planning()
         if not path:
             print("No Path Found!")
