@@ -234,9 +234,11 @@ RRT 算法得到的结果不一定是最优的，但我们可以用一个简单�
 
 ### 任务 2：RRT-Connect 算法
 
-在任务 1 中，我们认识到了 RRT 算法，并成功在三种不同场景中使用该算法完成了规划。由于 RRT 算法需要不停采样，采样效率对收敛速度有重要影响。而原始 RRT 只是基于起点生成单棵树进行采样，效率较低，特别是在 ENV3 这种存在狭窄通道的场景中
-![](https://file%2B.vscode-resource.vscode-cdn.net/d%3A/pythonProject/2022_IRC_ROBOT_DIY/assets/RRT_CONNECT_2D.gif?version%3D1656661963551)
-为此， Kuffner et.al [2000] 提出了 RRT-Connect 算法。该算法在RRT的基础上引入了双树扩展环节，即分别以起点和目标点为根节点生成两棵树进行双向扩展，当两棵树建立连接时可认为路径规划成功,拒听过程如图所示。
+在任务 1 中，我们认识到了 RRT 算法，并成功在三种不同场景中使用该算法完成了规划。由于 RRT 算法需要不停采样，采样效率对收敛速度有重要影响。而原始 RRT 只是基于起点生成单棵树进行采样，效率较低，特别是在 ENV3 这种存在狭窄通道的场景中。
+
+<img src="assets/rrt-connect2d.png" alt="image-20220628222119653" style="zoom:50%;" />
+
+为此， Kuffner et.al [2000] 提出了 RRT-Connect 算法。该算法在RRT的基础上引入了双树扩展环节，即分别以起点和目标点为根节点生成两棵树进行双向扩展，当两棵树建立连接时可认为路径规划成功,具体过程如上图所示。
 
 
 <img src="assets/rrt-connect-abstract.png" alt="image-20220628222119653" style="zoom:70%;" />
