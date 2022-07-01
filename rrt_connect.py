@@ -60,7 +60,6 @@ class RrtConnect:
                     self.V2.append(node_new_change)
                     while self.is_node_equals(node_new,node_new_change)!=True:
                         node_new_change2=self.new_state(node_new_change,node_new)
-                        self.iter_num = i + 1
                         if node_new_change2 and not self.utils.is_collision(node_new_change2, node_new_change):
                             self.V2.append(node_new_change2)
                             node_new_change=self.node_change(node_new_change, node_new_change2)
@@ -234,7 +233,7 @@ def env2_planning(eval_time=1):
         print("Iteration:", rrt.iter_num)
         if path:
             print("Distance:{:.3f}".format(rrt.dist))
-        rrt.plotting.animation(rrt.nodes, path, "RRT_ENV2", True)
+        rrt.plotting.animation_connect(rrt.V1,rrt.V2,path,"RRT_ENV2")
         return
     # evaluation
     time_sum = list()
@@ -277,7 +276,7 @@ def env3_planning(eval_time=1):
         print("Time: {:.3f} s".format(rrt.time_end - rrt.time_start))
         print("Iteration:", rrt.iter_num)
         print("Distance:{:.3f}".format(rrt.dist))
-        rrt.plotting.animation(rrt.nodes, path, "RRT_ENV3", True)
+        rrt.plotting.animation_connect(rrt.V1,rrt.V2,path,"RRT_ENV2")
         return
     # evaluation
     time_sum = list()
@@ -309,5 +308,5 @@ def env3_planning(eval_time=1):
 
 if __name__ == '__main__':
     env1_planning(eval_time=1)
-    # env2_planning(eval_time=1)
-    # env3_planning(eval_time=1)
+    env2_planning(eval_time=1)
+    env3_planning(eval_time=1)
