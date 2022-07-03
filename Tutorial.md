@@ -133,6 +133,27 @@ conda env create --file env.yml
 
 ## 三、背景介绍
 
+机器人学科作为集计算机视觉，控制工程，机械工程集一体的综合学科，在现代社会起到了越来越重要的作用。2021年的十四五计划中，国家对机器人产业的发展做出了重大指示，进一步说明了机器人在科研，工业，民生的巨大潜力与重要作用
+
+我们的项目只关注机器人的路径规划方面的知识。
+
+路径规划算法的定义是：移动机器人在具有障碍物的环境中按照一定的评价标准，寻找一条从起始状态到目标状态的无碰路径。
+
+为了保证移动机器人正确执行各种任务，高效且实用的路径规划算法研究十分必要。我们对路径常常有两个基本要求：
+
+- 路径的有效性，即路径是可达的，无碰撞的
+- 较为优化的路径，即路径是尽可能短的
+
+由于不同的机器人种类（移动机器人，六轴机械臂等），使用场景（2D 空间规划，3D 空间规划）的不同，上述的两个基本要求衍生出了不同的路径规划算法与具体约束。其中一种分类方法是分为全局路径规划和局部路径规划
+
+全局路径规划是根据环境全局的信息，这包括机器人在当前状态下探测不到的信息。全局规划将环境信息存储在一张图中，利用这张图找到可行的路径。全局算法往往需要耗费大量的计算时间，不适于快速变化的动态环境，同时由于全局路径规划需要事先获得全局环境信息，也不适于未知环境下的规划任务
+
+局部路径规划只考虑机器人的瞬时环境信息，因此计算量减小，速度大大提高。但是局部路径规划算法有时不一定能够使机器人到达目标点，造成算法全局不收敛
+
+而对于移动机器人来说，考虑非完整微分约束的路径规划是该领域的难题之一。非完整微分约束限制机器人系统的运动速度并且约束不可积分，无法将这种约束转化为简单的几何约束
+
+而本项目所专注的基于随机采样的路径规划算法特别是快速随机搜索树算法 (RRT)，可以将各种约束集成在算法本身之中，因此可以很有效的解决有非完整微分约束的路径规划问题
+
 ## 四、开发篇
 
 该项目结构如下，其中 tool 文件夹内不需要改动，专注完成任务 1，任务 2，任务 3 所涉及到的 3 个文件即可
@@ -225,31 +246,39 @@ CMU 课件：https://www.cs.cmu.edu/~maxim/classes/robotplanning_grad/lectures/R
 
 #### 任务 1.3 后处理，优化 RRT 产生的路径（开放题，可选）
 
-RRT 算法得到的结果不一定是最优的，但我们可以用一个简单的启发式方法对路径进行一个小小的优化，去除一些无意义的点：
+RRT 算法得到的结果不一定是最优的，但我们可以用一个简单的启发式方法对路径进行一个小小的优化，去除一些无意义的点，缩短路径长度：
 
-- 连接起点与终点，若二者间存在碰撞，则加入终点的上一步路径点
-- 以上一个路径点为终点，继续进行判断，直到终点与起点间不存在碰撞
+- 连接起点与终点，若二者间存在碰撞，则加入终点的上一步路径点，并以该点为新的终点
+- 继续进行判断，直到终点与起点间不存在碰撞
 
-对于三个场景的结果，上述策略是否可以进一步优化路径? （路径长度降低）
+对于三个场景的结果，上述策略是否可以进一步优化路径? 
 
 ### 任务 2：RRT-Connect 算法
 
 在任务 1 中，我们认识到了 RRT 算法，并成功在三种不同场景中使用该算法完成了规划。由于 RRT 算法需要不停采样，采样效率对收敛速度有重要影响。而原始 RRT 只是基于起点生成单棵树进行采样，效率较低，特别是在 ENV3 这种存在狭窄通道的场景中.
 
-<img src="assets/rrt-connect-abstract.png" alt="image-20220628222119653" style="zoom:70%;" />
-
 为此， Kuffner et.al [2000] 提出了 RRT-Connect 算法。该算法在RRT的基础上引入了双树扩展环节，即分别以起点和目标点为根节点生成两棵树进行双向扩展，当两棵树建立连接时可认为路径规划成功。
 
-RRT-Connect算法的流程图示大致如下图所示，该算法一开始同时从初始状态点和目标状态点生长两棵随机树，每一次迭代过程中，选择其中节点少的一棵树进行扩展，尝试连接另一棵树的最近节点来扩展新节点。当最终连接到同一个点时，路径寻找完成。
+RRT-Connect 算法的流程图示大致如下图所示，该算法一开始同时从初始状态点和目标状态点生长两棵随机树，每一次迭代过程中，选择其中节点少的一棵树进行扩展，尝试连接另一棵树的最近节点来扩展新节点。当最终连接到同一个点时，路径寻找完成。
 
 <img src="assets/rrt-connect2d.png" alt="image-20220628222119653" style="zoom:50%;" />
 
+<img src="assets/rrt-connect-abstract.png" alt="image-20220628222119653" style="zoom:70%;" />
+
 1. 在自由空间中随机采样得到采样点 $q_{rand}$
+
 2. 从搜索树 $G_{1}$ 中找出距离采样点 $q_{rand}$ 最近的节点 $q_{nearest}$
+
 3. 根据步长参数以及 $q_{rand}$ 与 $q_{nearest}$ 之间距离 ，产生新的拓展点 $q_{new}$
-4. 如果 $q_{new}$ 和 $q_{near}$ 间存在直线通路（无碰撞）, 则将 $q_{new}$ 加入到从起点$q_{init}$开始的搜索树 $G_{1}$ 中，且它的父节点为 $q_{nearest}$;<br>接着，从终点$q_{goal}$k开始的搜索树$G_{2}$ 中找出距离拓展点 $q_{new}$ 最近的节点 $q_{nearest}^{'}$,根据步长参数以及 $q_{nearest}^{'}$ 与 $q_{new}$ 之间距离 ，产生新的拓展点 $q_{new}^{'}$;<br>
-如果 $q_{new}^{'}$ 和 $q_{near}^{'}$ 间存在直线通路（无碰撞）, 则将 $q_{new}^{'}$ 加入到从终点$q_{goal}$开始的搜索树 $G_{2}$ 中；<br>当$q_{new}^{'}$与$q_{new}$不是同一个点时，根据步长参数以及 $q_{new}^{'}$ 与 $q_{new}$ 之间距离 ，产生新的拓展点 $q_{new}^{''}$,如果 $q_{new}^{'}$ 和 $q_{new}^{''}$ 间存在直线通路（无碰撞）, 则将 $q_{new}^{''}$父节点设为$q_{new}^{'}$ ；
-5. 若点 $q_{new}$ 与 $q_{new}^{'}$ 间距离小于步长且二者间不存在碰撞 (说明找到分别从起点和终点出发的路径的公共点，通路完成，找到路径)，算法终止；否则进入下一轮迭代，注意：每次新的迭代之前如果比较$G_{1}$和$G_{2}$连个搜索树的节点数，每次选择节点数较小的那棵树进行拓展；
+
+4. 如果 $q_{new}$ 和 $q_{near}$ 间存在直线通路（无碰撞），则将 $q_{new}$ 加入到从起点 $q_{init}$ 开始的搜索树 $G_{1}$ 中，且它的父节点为 $q_{nearest}$
+
+5. 接着，从终点 $q_{goal}$ 开始的搜索树 $G_{2}$ 中找出距离拓展点 $q_{new}$ 最近的节点 $q_{nearest}^{'}$, 根据步长参数以及 $q_{nearest}^{'}$ 与 $q_{new}$ 之间距离, 产生新的拓展点 $q_{new}^{'}$
+  如果 $q_{new}^{'}$ 和 $q_{near}^{'}$ 间存在直线通路（无碰撞）, 则将 $q_{new}^{'}$ 加入到从终点 $q_{goal}$ 开始的搜索树 $G_{2}$ 中
+
+6. 当 $q_{new}^{'}$ 与 $q_{new}$ 不是同一个点时，根据步长参数以及 $q_{new}^{'}$ 与 $q_{new}$ 之间距离 ，产生新的拓展点 $q_{new}^{''}$ (尝试连接两棵树）; 若 $q_{new}^{'}$ 和 $q_{new}^{''}$ 间存在直线通路（无碰撞）, 则添加 $q_{new}^{''}$ 到 V2 中，更新 $q_{new}^{'}$ （更改父节点为 $q_{new}^{''}$)；
+
+7. 若点 $q_{new}$ 与 $q_{new}^{'}$ 间距离小于步长且二者间不存在碰撞 (说明找到分别从起点和终点出发的路径的公共点，通路完成，找到路径)，算法终止；否则进入下一轮迭代，注意：每次新的迭代之前如果比较 $G_{1}$ 和 $G_{2}$ 连个搜索树的节点数，每次选择节点数较小的那棵树进行拓展；
 
 算法原始论文: https://www.cs.cmu.edu/afs/cs/academic/class/15494-s12/readings/kuffner_icra2000.pdf
 
@@ -275,22 +304,69 @@ CMU 课件：https://www.cs.cmu.edu/~maxim/classes/robotplanning_grad/lectures/R
 Baseline
 
 - 环境 1:
-  - 迭代次数 1400，路径长度 TODO
+  - 迭代次数 657，路径长度 66.013
 - 环境 2:
-  - 迭代次数 2444，路径长度 TODO
+  - 迭代次数 3525，路径长度 109.233
 - 环境 3:
-  - 迭代次数 5722，路径长度 TODO
+  - 迭代次数 5096，路径长度 57.189
 
 ### 任务 3: RRT* 算法
 
-尽管 RRT- Connect 大幅度提高了算法的收敛效率，但是由于其基于采样的方式，使得最终获得的路径并不一定收敛，路径也不一定最优（最短）
+尽管 RRT-Connect 提高了算法的收敛效率，但是由于其基于采样的方式，使得最终获得的路径并不一定收敛，路径也不一定最优（最短）
 
 为此，在 2006 年，Karaman et al.[2006] 提出了 RRT* 算法，该算法主要流程与 RRT 一致，但做出了以下更改
 
 - 更改最近点选择策略
-- 在加入新点后重新调整树的拓扑，降低 cost（距离）
+  - 即重新选择定义父节点选择策略：在新产生的节点 $x_{new}$ 附近以定义的半径范围内寻找“近邻”，作为替换 $x_{new}$ 父节点的备选依次计算“近邻”节点到起点的路径代价加上 $x_{new}$ 到每个“近邻”的路径的代价，把代价最小的点作为新的父节点。
+	  - 例如，如下图所示，搜索多个节点去作为 new 的父节点，看看通过哪个节点到达start最短。在本图中new-near-start是最短的，new-x1-near-start和 new-x2-near-start 均比第一条路长。
+	
 
->  TODO: 增进算法描述，伪代码等资料（瑞安，浩浩）
+<img src="assets/rrtxing_1.png" alt="rrtxing_1" style="zoom:50%;" />
+
+- 在加入新点后重新调整树的拓扑，降低 cost（距离）
+  - 如果近邻节点的父节点改为 $x_{new}$ 可以减小路径代价，则进行更改
+    - 例如，如下图所示，对于x1来讲，start-near-x1 比 start-near-new-x1的距离短，所以 x1 的父节点是 near，不用修改；对于 x2 来讲，start-near-x1-x2 比 start-near-new-x2 的距离长，所以修改 x2 的父节点为 new。
+
+<img src="assets/rrtxing_2.png" alt="rrtxing_2" style="zoom:50%;" />
+
+```
+Algorithm RRT*:
+			 Input: start point st, end point ed
+ 	     Output: tree T
+ 	     
+ 	     T.init(st) // leverage st as the root node
+ 	     for iter = 1 to max_iter do
+ 					 x_rand = generate_random_node()
+ 					 x_near = find_nearest_node(x_rand, T)
+ 					 x_new = new_state(x_near, x_rand)
+           x_nearneighbor = findnear_neighbor(T, x_new, r)
+           if obstaclefree(x_new, T, r) then
+           		T.Chooseparent(x_new, x_nearneighbor, T)
+           		// Chooseparent
+              for each x_nearneighbor calculate(dist(x_new, x_nearneighbor) + cost(x_nearneighbor, x_init))
+               	x_near-neighbor-mincost=min(dist(x_new,x_near-neighbor )+cost(x_near-neighbor, x_init))
+               	x_new_parent=x_near-neighbor-mincost
+               	return x_new_parent
+              T.add_vertex(x_new)
+             	T.rewire(T,x_new, x_near_neighbor )
+             	// rewire
+              for each x_near_neighbor calculate(dist(x_near_neighbor, x_new)+cost(x_new，x_init))
+               		x_new_mincost=min(dist(x_near_neighbor, x_new)+cost(x_new, x_init))
+               		x_near_neighbor_newparent=x_new_mincost
+               		return x_near_neighbor_newparent 
+              if not colision(x_new, ed):
+		          	T.add_vertex(ed)
+		           	break
+              
+return T
+```
+
+1. 在自由空间中随机采样得到采样点 $x_{rand}$
+2. 从搜索树 $T$ 中找出距离采样点 $x_{rand}$ 最近的节点 $x_{near}$
+3. 根据步长参数以及 $x_{rand}$ 与 $x_{near}$ 之间距离 ，产生新的拓展点 $x_{new}$
+4. 以 $x_{new}$ 更改父节点，并且重新进行拓扑操作
+5. 上述两操作完成后进入下一轮迭代
+6. 若新加入的点 $x_{new}$ 与终点 ed 间距离小于步长且二者间不存在碰撞 (说明二者间可直线连接，已发现从起点到终点路径)，则最后添加终点到树中，算法终止
 
 虽然 RRT* 算法的路径结果更优，但是 RRT* 的收敛时间相应地也增长了不少
 
@@ -312,9 +388,7 @@ CMU 课件：https://www.cs.cmu.edu/~maxim/classes/robotplanning_grad/lectures/R
 
 如任务 1.1，任务 2.2，请调整参数，获得比 baseline 更优的算法
 
-请同学们充分理解算法，调整算法参数，获得比 baseline 更短的路及ing长度迭代次数， 并报告相应参数及结果（设置 eval_time=5 获取平均时间，迭代次数）
-
-Baseline（ TODO  )
+请同学们充分理解算法，调整算法参数，获得比 baseline 更短的路径长度迭代次数， 并报告相应参数及结果（设置 eval_time=5 获取平均时间，迭代次数）
 
 - 环境 1:
   - 迭代次数 1400，路径长度 TODO
@@ -327,7 +401,12 @@ Baseline（ TODO  )
 
 任务 1.3 中的策略对于 RRT* 算法结果是否有效？若无效，请简单讨论下无效原因
 
-### 任务 4
+### 补充材料
 
+路径规划算法仍旧是当今研究的热门
 
+对于学有余力的同学，我们给出了更新的参考算法，欢迎大家在我们的环境中将其进行实现，并进行分析，对比，讨论
 
+- [RRT*-Smart: ](http://save.seecs.nust.edu.pk/pubs/ICMA2012.pdf) Rapid convergence implementation of RRT* towards optimal solution，2013；改善了 RRT* 的收敛速度
+- [Informed RRT*: ](https://arxiv.org/abs/1404.2334) Optimal Sampling-based Path Planning Focused via Direct Sampling of an Admissible Ellipsoidal heuristic，2014；基于 A* 算法思想改善 RRT* 收敛速度
+- [FMT*](https://arxiv.org/abs/1306.3532) Fast Marching Tree: a Fast Marching Sampling-Based Method for Optimal Motion Planning in Many Dimensions，2015；一种新的采样路径规划算法，收敛速度优于 RRT*

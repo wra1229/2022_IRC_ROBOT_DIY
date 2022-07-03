@@ -43,6 +43,7 @@ class RrtConnect:
 
     def planning(self):
         path = None
+        converge = False
         self.time_start = time.time()
         for i in tqdm.tqdm(range(self.max_iter)):
             # TODO: Implement RRT Connnect planning (Free to add your own functions)
@@ -129,7 +130,7 @@ def env2_planning(eval_time=1):
         print("Iteration:", rrt.iter_num)
         if path:
             print("Distance:{:.3f}".format(rrt.dist))
-        rrt.plotting.animation(rrt.V1, rrt.V2, path, "RRT_CONNECT_ENV2")
+        rrt.plotting.animation_connect(rrt.V1, rrt.V2, path, "RRT_CONNECT_ENV2")
         return
     # evaluation
     time_sum = list()
@@ -172,7 +173,7 @@ def env3_planning(eval_time=1):
         print("Time: {:.3f} s".format(rrt.time_end - rrt.time_start))
         print("Iteration:", rrt.iter_num)
         print("Distance:{:.3f}".format(rrt.dist))
-        rrt.plotting.animation(rrt.V1, rrt.V2, path, "RRT_CONNECT_ENV3")
+        rrt.plotting.animation_connect(rrt.V1, rrt.V2, path, "RRT_CONNECT_ENV3")
         return
     # evaluation
     time_sum = list()
