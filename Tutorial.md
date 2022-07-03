@@ -314,16 +314,20 @@ Baseline
 
 尽管 RRT-Connect 提高了算法的收敛效率，但是由于其基于采样的方式，使得最终获得的路径并不一定收敛，路径也不一定最优（最短）
 
-为此，在 2006 年，Karaman et al.[2006] 提出了 RRT* 算法，该算法主要流程与 RRT 一致，但做出了以下更改
+为此，在 2006 年，Karaman et al.[2006] 提出了 RRT* 算法，该算法主要流程与 RRT 一致，但添加了额外的路径优化策略，使得最终的路径长度尽可能短
+
+具体优化如下：
 
 - 更改最近点选择策略
   - 即重新选择定义父节点选择策略：在新产生的节点 $x_{new}$ 附近以定义的半径范围内寻找“近邻”，作为替换 $x_{new}$ 父节点的备选依次计算“近邻”节点到起点的路径代价加上 $x_{new}$ 到每个“近邻”的路径的代价，把代价最小的点作为新的父节点。
+	- 注意，该算法并非直接使用半径 $r$ 作为搜索半径，搜索半径公式为 $r' = \min((r * \frac{log|T|}{|T|})^{1/2}, 步长)$， 其中 $|T|$ 为当前树中结点个数
+	- 实际算法中，判断 $x_{new}$ 到所有树中节点的距离，将距离小于 $r’$ 的节点设为候选
 	  - 例如，如下图所示，搜索多个节点去作为 new 的父节点，看看通过哪个节点到达start最短。在本图中new-near-start是最短的，new-x1-near-start和 new-x2-near-start 均比第一条路长。
 	
 
 <img src="assets/rrtxing_1.png" alt="rrtxing_1" style="zoom:50%;" />
 
-- 在加入新点后重新调整树的拓扑，降低 cost（距离）
+- 在加入新点后重新调整树的拓扑，降低距离
   - 如果近邻节点的父节点改为 $x_{new}$ 可以减小路径代价，则进行更改
     - 例如，如下图所示，对于x1来讲，start-near-x1 比 start-near-new-x1的距离短，所以 x1 的父节点是 near，不用修改；对于 x2 来讲，start-near-x1-x2 比 start-near-new-x2 的距离长，所以修改 x2 的父节点为 new。
 
@@ -339,18 +343,24 @@ Algorithm RRT*:
  					 x_rand = generate_random_node()
  					 x_near = find_nearest_node(x_rand, T)
  					 x_new = new_state(x_near, x_rand)
-           x_nearneighbor = findnear_neighbor(T, x_new, r)
            if obstaclefree(x_new, T, r) then
-           		T.Chooseparent(x_new, x_nearneighbor, T)
-           		// Chooseparent
-              for each x_nearneighbor calculate(dist(x_new, x_nearneighbor) + cost(x_nearneighbor, x_init))
-               	x_near-neighbor-mincost=min(dist(x_new,x_near-neighbor )+cost(x_near-neighbor, x_init))
-               	x_new_parent=x_near-neighbor-mincost
+              x_nearneighbor = findnear_neighbor(T, x_new, r)  // find candidate neighbors by r 
+           		T.choose_parent(x_new, x_nearneighbor)
+           		/* choose_parent func, cost(A, B) means the distance from the A to B
+              	for each x in x_nearneighbor:
+              		min_dist = min(calculate(dist(x_new, x) + cost(x, st)), min_dist)
+               	min_neighbor_ind = argmin(min_dist)
+               	x_new.parent=x_nearneighbor[min_neighbor_ind]
                	return x_new_parent
+              */
               T.add_vertex(x_new)
              	T.rewire(T,x_new, x_near_neighbor )
-             	// rewire
-              for each x_near_neighbor calculate(dist(x_near_neighbor, x_new)+cost(x_new，x_init))
+             	/* rewire func
+             		for each x in x_nearneighbor:
+             			if cost(x, st) > cost(x_new, st):
+		                update the parent of x to x_new
+              */ 
+              for each x_near_neighbor calculate(dist(x_near_neighbor, x_new)+cost(x_new，x_init)):
                		x_new_mincost=min(dist(x_near_neighbor, x_new)+cost(x_new, x_init))
                		x_near_neighbor_newparent=x_new_mincost
                		return x_near_neighbor_newparent 
@@ -390,12 +400,14 @@ CMU 课件：https://www.cs.cmu.edu/~maxim/classes/robotplanning_grad/lectures/R
 
 请同学们充分理解算法，调整算法参数，获得比 baseline 更短的路径长度迭代次数， 并报告相应参数及结果（设置 eval_time=5 获取平均时间，迭代次数）
 
+在适当的参数情况下，RRT* 算法路径优于原始 RRT 结果（baseline 参数不合适）
+
 - 环境 1:
-  - 迭代次数 1400，路径长度 TODO
+  - 迭代次数 1001，路径长度 62.075
 - 环境 2:
-  - 迭代次数 2444，路径长度 TODO
+  - 迭代次数 5006，路径长度 104.721
 - 环境 3:
-  - 迭代次数 5722，路径长度 TODO
+  - 迭代次数 5728，路径长度 59.671
 
 #### 任务 3.3 RRT* 算法的后处理（开放题，可选）
 
