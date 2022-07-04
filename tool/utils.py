@@ -12,6 +12,7 @@ class Node:
         self.x = n[0]
         self.y = n[1]
         self.parent = None
+        self.cost=0.0
 
 
 class Utils:
